@@ -1,0 +1,206 @@
+nohup: ignoring input
+Creating new Ultralytics Settings v0.0.6 file ✅ 
+View Ultralytics Settings with 'yolo settings' or at '/home/ducanh/.config/Ultralytics/settings.json'
+Update Settings with 'yolo settings key=value', i.e. 'yolo settings runs_dir=path/to/dir'. For help see https://docs.ultralytics.com/quickstart/#ultralytics-settings.
+8021101562:AAE7JnW8F2tFR6DTtn3Rbz7aqkCQ0I0ZnY4 5195177230
+INFO:     Started server process [53183]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:42362 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42362 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48276 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48276 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47782 - "GET /api/pipeline/status HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:47792 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47792 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56518 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56518 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56518 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56518 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48420 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48420 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43772 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43772 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38172 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38172 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48790 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48790 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55330 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55330 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46184 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46184 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36966 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36966 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36966 - "OPTIONS /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36974 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36982 - "OPTIONS /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36966 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36988 - "GET /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36974 - "GET /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36966 - "GET /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36982 - "GET /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36966 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36982 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36966 - "GET /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36982 - "GET /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36982 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36982 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46326 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46326 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42194 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42194 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53634 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53634 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60764 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60764 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46930 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46930 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60030 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60030 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59824 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59824 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38188 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38188 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49218 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49218 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49228 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49242 - "POST /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49242 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49242 - "GET /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49242 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49242 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49242 - "OPTIONS /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49228 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37006 - "OPTIONS /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37018 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37026 - "GET /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37006 - "GET /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49228 - "GET /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49242 - "GET /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49228 - "OPTIONS /api/sources/26 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49228 - "DELETE /api/sources/26 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49228 - "OPTIONS /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37026 - "OPTIONS /api/pipeline/stop?source_id=26 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49228 - "POST /api/pipeline/stop?source_id=26 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37026 - "GET /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37026 - "OPTIONS /api/sources/27 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37026 - "DELETE /api/sources/27 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37026 - "OPTIONS /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37026 - "GET /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37026 - "OPTIONS /api/sources/28 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37026 - "DELETE /api/sources/28 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37026 - "OPTIONS /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37026 - "GET /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37026 - "OPTIONS /api/sources/29 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37026 - "DELETE /api/sources/29 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37026 - "OPTIONS /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49228 - "OPTIONS /api/pipeline/stop?source_id=29 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37026 - "POST /api/pipeline/stop?source_id=29 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49228 - "GET /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49228 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49228 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40446 - "OPTIONS /api/sources/30 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40446 - "PUT /api/sources/30 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40446 - "OPTIONS /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40446 - "GET /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40446 - "OPTIONS /api/pipeline/start HTTP/1.1" 200 OK
+INFO:     Starting pipeline for source 30
+INFO:     Loading YOLO model: yolov8n-pose.pt
+INFO:     Started video stream: /media/veracrypt8/ProjectCty/fall-detection/backend/data/uploads/50waystofall.mp4
+INFO:     127.0.0.1:37394 - "POST /api/pipeline/start HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37394 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37394 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37404 - "GET /data/data/snapshots/fall_1768293024_30.jpg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37414 - "GET /data/data/snapshots/fall_1768293021_30.jpg HTTP/1.1" 200 OK
+INFO:     ('127.0.0.1', 37418) - "WebSocket /api/ws/stream/30" [accepted]
+[31m[1mrequirements:[0m Ultralytics requirement ['lap>=0.5.12'] not found, attempting AutoUpdate...
+WARNING ⚠️ Retry 1/2 failed: Command 'uv pip install --no-cache-dir --python "/usr/bin/python3" "lap>=0.5.12"  --index-strategy=unsafe-best-match --break-system-packages' returned non-zero exit status 2.
+WARNING ⚠️ Retry 2/2 failed: Command 'uv pip install --no-cache-dir --python "/usr/bin/python3" "lap>=0.5.12"  --index-strategy=unsafe-best-match --break-system-packages' returned non-zero exit status 2.
+WARNING ⚠️ [31m[1mrequirements:[0m ❌ Command 'uv pip install --no-cache-dir --python "/usr/bin/python3" "lap>=0.5.12"  --index-strategy=unsafe-best-match --break-system-packages' returned non-zero exit status 2.
+Using Python 3.8.10 environment at: /usr
+Resolved 2 packages in 523ms
+Downloading numpy (16.5MiB)
+Downloading lap (1.6MiB)
+ Downloading lap
+ Downloading numpy
+Prepared 2 packages in 3.75s
+error: Failed to install: lap-0.5.12-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (lap==0.5.12)
+  Caused by: failed to create directory `/usr/local/lib/python3.8/dist-packages/lap-0.5.12.dist-info`: Permission denied (os error 13)
+
+ERROR:    WebSocket error: No module named 'lap'
+INFO:     connection closed
+INFO:     127.0.0.1:37394 - "OPTIONS /api/pipeline/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40446 - "OPTIONS /api/pipeline/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40446 - "OPTIONS /api/pipeline/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37394 - "OPTIONS /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37438 - "OPTIONS /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37454 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37460 - "OPTIONS /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37470 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     ('127.0.0.1', 37434) - "WebSocket /api/ws/stream/30" [accepted]
+[31m[1mrequirements:[0m Ultralytics requirement ['lap>=0.5.12'] not found, attempting AutoUpdate...
+WARNING ⚠️ Retry 1/2 failed: Command 'uv pip install --no-cache-dir --python "/usr/bin/python3" "lap>=0.5.12"  --index-strategy=unsafe-best-match --break-system-packages' returned non-zero exit status 2.
+WARNING ⚠️ Retry 2/2 failed: Command 'uv pip install --no-cache-dir --python "/usr/bin/python3" "lap>=0.5.12"  --index-strategy=unsafe-best-match --break-system-packages' returned non-zero exit status 2.
+WARNING ⚠️ [31m[1mrequirements:[0m ❌ Command 'uv pip install --no-cache-dir --python "/usr/bin/python3" "lap>=0.5.12"  --index-strategy=unsafe-best-match --break-system-packages' returned non-zero exit status 2.
+Using Python 3.8.10 environment at: /usr
+Resolved 2 packages in 18.85s
+Downloading numpy (16.5MiB)
+Downloading lap (1.6MiB)
+ Downloading lap
+ Downloading numpy
+Prepared 2 packages in 1.61s
+error: Failed to install: lap-0.5.12-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (lap==0.5.12)
+  Caused by: failed to create directory `/usr/local/lib/python3.8/dist-packages/lap-0.5.12.dist-info`: Permission denied (os error 13)
+
+ERROR:    WebSocket error: No module named 'lap'
+INFO:     connection closed
+INFO:     127.0.0.1:40446 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37438 - "OPTIONS /api/pipeline/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37394 - "OPTIONS /api/pipeline/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37454 - "OPTIONS /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37460 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37470 - "OPTIONS /api/pipeline/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37470 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37454 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37438 - "OPTIONS /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37394 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37460 - "OPTIONS /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40446 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37470 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37454 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37438 - "OPTIONS /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37394 - "OPTIONS /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37460 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40446 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37470 - "GET /api/groups HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:37454 - "OPTIONS /api/pipeline/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40446 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37460 - "OPTIONS /api/pipeline/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37438 - "OPTIONS /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37394 - "OPTIONS /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37470 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37454 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40446 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37460 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37394 - "GET /api/pipeline/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37438 - "GET /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37470 - "GET /api/pipeline/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37454 - "GET /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37460 - "GET /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37454 - "OPTIONS /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40446 - "GET /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37460 - "OPTIONS /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37394 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37438 - "GET /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37470 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37454 - "GET /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40446 - "GET /api/sources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60578 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60578 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33002 - "OPTIONS /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33002 - "GET /api/events?limit=20 HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [53183]

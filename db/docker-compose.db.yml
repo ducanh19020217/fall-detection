@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  fall-db:
+    image: postgres:15
+    container_name: fall-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: fall_detection
+      POSTGRES_USER: falluser
+      POSTGRES_PASSWORD: fallpass
+    ports:
+      - "54326:5432"
+    volumes:
+      - fall_pgdata:/var/lib/postgresql/data
+
+volumes:
+  fall_pgdata:
