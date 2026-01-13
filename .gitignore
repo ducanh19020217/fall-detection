@@ -15,3 +15,14 @@ build/
 
 # OS
 .DS_Store
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Data
+data/
+backend/data/
+frontend/dist/
+*.log
