@@ -27,7 +27,9 @@ const resources = {
                 "no_events": "No fall events detected yet.",
                 "fall_detected": "Fall Detected",
                 "score": "Score",
-                "track_id": "Track ID"
+                "track_id": "Track ID",
+                "resolved": "Resolved",
+                "by": "by"
             },
             "demo": {
                 "title": "Demo Controls",
@@ -142,7 +144,9 @@ const resources = {
                 "no_events": "Chưa phát hiện sự cố ngã nào.",
                 "fall_detected": "Phát hiện ngã",
                 "score": "Điểm số",
-                "track_id": "ID đối tượng"
+                "track_id": "ID đối tượng",
+                "resolved": "Đã xử lý",
+                "by": "bởi"
             },
             "demo": {
                 "title": "Điều khiển Demo",

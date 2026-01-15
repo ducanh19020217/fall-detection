@@ -21,7 +21,8 @@ export default function Admin({ activeStreams, onStart, onStop }) {
     const fetchSources = async () => {
         try {
             const res = await axios.get(`${API_URL}/api/sources`);
-            setSources(res.data);
+            // Filter only cameras (rtsp, webcam)
+            setSources(res.data.filter(s => s.type !== 'file'));
         } catch (err) {
             console.error("Failed to fetch sources", err);
         }
@@ -126,7 +127,6 @@ export default function Admin({ activeStreams, onStart, onStop }) {
                             >
                                 <option value="rtsp">IP Camera (RTSP)</option>
                                 <option value="webcam">Webcam (USB)</option>
-                                <option value="file">File</option>
                             </select>
                         </div>
                         <div>

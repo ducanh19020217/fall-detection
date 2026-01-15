@@ -11,19 +11,7 @@ class VideoStream:
     def __init__(self, source_url: str, is_file: bool = False):
         self.source_url = source_url
         self.is_file = is_file
-        # Handle webcam index
-        if source_url.isdigit():
-            self.cap = cv2.VideoCapture(int(source_url))
-        else:
-            # For RTSP, we might want to force TCP for reliability if needed
-            # os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp"
-            self.cap = cv2.VideoCapture(source_url)
-        
-        if not self.cap.isOpened():
-            logger.error(f"Failed to open video source: {source_url}")
-            # We don't raise exception here to avoid crashing the thread immediately, 
-            # but the _update loop will handle it.
-        
+        self.cap = None
         self.running = False
         self.lock = threading.Lock()
         self.frame_queue = queue.Queue(maxsize=5) # Drop frames if processing is slow
@@ -40,14 +28,32 @@ class VideoStream:
     def stop(self):
         self.running = False
         if self.thread:
-            self.thread.join()
+            # Use a small timeout to avoid hanging the API if VideoCapture is stuck
+            self.thread.join(timeout=1.0)
         if self.cap:
             self.cap.release()
         logger.info(f"Stopped video stream: {self.source_url}")
 
     def _update(self):
+        # Open capture in background thread
+        if self.source_url.isdigit():
+            self.cap = cv2.VideoCapture(int(self.source_url))
+        else:
+            # Force TCP for RTSP reliability
+            # os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp"
+            self.cap = cv2.VideoCapture(self.source_url)
+
+        if not self.running:
+            if self.cap: self.cap.release()
+            return
+
+        if not self.cap or not self.cap.isOpened():
+            logger.error(f"Failed to open video source: {self.source_url}")
+            self.running = False
+            return
+
         while self.running:
-            if not self.cap.isOpened():
+            if not self.cap or not self.cap.isOpened():
                 logger.error("Video source not opened")
                 self.running = False
                 break

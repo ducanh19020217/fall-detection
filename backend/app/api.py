@@ -182,13 +182,22 @@ def start_pipeline(config: schemas.PipelineStart, db: Session = Depends(database
     
     is_file = source.type == 'file'
     
-    # Priority: 1. Explicit config from request body, 2. Group config from DB
+    # Priority: 1. Explicit config from request body, 2. Group config from DB, 3. Environment variables
     telegram_config = config.telegram_config
     if not telegram_config and source.group:
         telegram_config = {
             "chat_id": source.group.chat_id,
             "bot_token": source.group.bot_token
         }
+    
+    if not telegram_config:
+        bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+        chat_id = os.getenv("TELEGRAM_CHAT_ID")
+        if bot_token and chat_id:
+            telegram_config = {
+                "chat_id": chat_id,
+                "bot_token": bot_token
+            }
 
     manager.start_pipeline(source.id, source.source_url, is_file=is_file, telegram_config=telegram_config)
     return {"status": "started", "source": source.name}

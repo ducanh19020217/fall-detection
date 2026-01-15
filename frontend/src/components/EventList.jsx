@@ -16,7 +16,7 @@ export default function EventList({ events }) {
                     </div>
                 ) : (
                     events.map((event) => (
-                        <div key={event.id} className="event-item alert">
+                        <div key={event.id} className={`event-item alert ${event.is_resolved ? 'resolved' : ''}`}>
                             <div className="event-icon">
                                 <AlertTriangle color="#ef4444" size={20} />
                             </div>
@@ -27,9 +27,34 @@ export default function EventList({ events }) {
                                 <div className="event-score">
                                     {t('dashboard.fall_detected')} ({t('dashboard.score')}: {event.fall_score.toFixed(2)})
                                 </div>
+                                <div style={{ fontSize: '0.85rem', color: '#3b82f6', fontWeight: '600' }}>
+                                    {event.source?.name || `Source ${event.source_id}`}
+                                </div>
                                 <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
                                     {t('dashboard.track_id')}: {event.track_id}
                                 </div>
+                                {event.is_resolved && (
+                                    <div style={{
+                                        marginTop: '4px',
+                                        fontSize: '0.75rem',
+                                        color: '#10b981',
+                                        fontWeight: 'bold',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
+                                    }}>
+                                        <span style={{
+                                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                            padding: '2px 6px',
+                                            borderRadius: '4px'
+                                        }}>
+                                            ✅ {t('dashboard.resolved')}
+                                        </span>
+                                        <span style={{ color: '#64748b' }}>
+                                            {t('dashboard.by')}: {event.responder_name} ({new Date(event.resolved_at).toLocaleTimeString()})
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                             {event.snapshot_path && (
                                 <div className="event-snapshot">

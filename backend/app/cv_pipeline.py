@@ -6,133 +6,190 @@ from collections import deque
 import time
 import os
 from .notifications import TelegramBot
+import threading
 
 logger = logging.getLogger(__name__)
 
+_MODEL_CACHE = {}
+_MODEL_CACHE_LOCK = threading.Lock()
+
+
 class FallDetector:
+    _SKELETON = (
+        (5, 7), (7, 9), (6, 8), (8, 10),
+        (11, 13), (13, 15), (12, 14), (14, 16),
+        (5, 6), (11, 12), (5, 11), (6, 12)
+    )
+
     def __init__(self, model_path='yolov8n-pose.pt', telegram_config=None):
-        logger.info(f"Loading YOLO model: {model_path}")
-        self.model = YOLO(model_path)
-        self.track_history = {} # Store history for velocity calc: {track_id: deque([(ts, keypoints, bbox), ...])}
-        self.fall_cooldown = {} # {track_id: last_fall_time}
+        global _MODEL_CACHE
+
+        with _MODEL_CACHE_LOCK:
+            if model_path not in _MODEL_CACHE:
+                logger.info(f"Loading YOLO model: {model_path}")
+                _MODEL_CACHE[model_path] = YOLO(model_path)
+            else:
+                logger.info(f"Using cached YOLO model: {model_path}")
+
+        self.model = _MODEL_CACHE[model_path]
+
+        # --- Only store what velocity needs ---
+        # {track_id: deque([(ts, y_center, height), ...])}
+        self.track_history = {}
+        self.fall_cooldown = {}
         self.COOLDOWN_SECONDS = 5.0
-        self.FALL_CONFIDENCE_THRESHOLD = 0.6
-        
+        self.FALL_CONFIDENCE_THRESHOLD = 0.8
+
         # Heuristic thresholds
-        self.ANGLE_THRESHOLD = 45 # degrees from vertical
-        self.ASPECT_RATIO_THRESHOLD = 1.2 # width / height
-        
+        self.ANGLE_THRESHOLD = 55
+        self.ASPECT_RATIO_THRESHOLD = 1.5
+
+        # --- NEW: Pending-fall confirmation (avoid sit->stand false alarms) ---
+        # track_id -> {"t0": float, "best_score": float, "reason": str, "recovered_since": float|None}
+        self.pending_falls = {}
+        self.CONFIRM_SECONDS = 1.8        # must remain "lying" for >= this time to confirm
+        self.RECOVER_CLEAR_SECONDS = 0.6  # if upright for >= this time, cancel pending
+
         # Features
         self.night_mode = False
-        
+        self._clahe = None
+
+        # Telegram
         token = telegram_config.get("bot_token") if telegram_config else None
         chat_id = telegram_config.get("chat_id") if telegram_config else None
         self.telegram_bot = TelegramBot(token=token, chat_id=chat_id)
-        
-        # Video Recording
-        self.fps = 30
-        self.buffer_duration = 5 # seconds
-        self.buffer_size = self.fps * self.buffer_duration
-        self.frame_buffer = deque(maxlen=self.buffer_size)
-        self.active_recordings = [] # List of dicts: {'frames': [], 'target_length': int, 'track_id': int, 'start_ts': float}
-        
+
         # Optimization
         self.frame_count = 0
-        self.SKIP_FRAMES = 2 # Process 1 frame, skip 2 (effectively 10 FPS processing from 30 FPS input)
+        self.SKIP_FRAMES = 2  # process 1, skip 2
         self.last_results = None
-        self.last_annotated_frame = None
+
+        # 480p processing target
+        self.TARGET_H = 480
+
+        # Skeleton draw config
+        self.KPT_CONF_THR = 0.35
 
     def set_night_mode(self, enabled: bool):
         self.night_mode = enabled
+        if enabled and self._clahe is None:
+            self._clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
         logger.info(f"Night mode set to: {enabled}")
+
+    def _resize_to_480h(self, frame):
+        """
+        Resize by fixing height=480, keep aspect ratio.
+        Returns resized frame.
+        """
+        h, w = frame.shape[:2]
+        if h == self.TARGET_H:
+            return frame
+        scale = self.TARGET_H / float(h)
+        new_w = int(w * scale)
+        return cv2.resize(frame, (new_w, self.TARGET_H), interpolation=cv2.INTER_AREA)
 
     def _preprocess_frame(self, frame):
         if not self.night_mode:
             return frame
-        
-        # CLAHE (Contrast Limited Adaptive Histogram Equalization)
-        # Convert to LAB color space
+
         lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
         l, a, b = cv2.split(lab)
-        
-        # Apply CLAHE to L-channel
-        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
-        cl = clahe.apply(l)
-        
-        # Merge and convert back to BGR
-        limg = cv2.merge((cl, a, b))
-        final = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
-        return final
+        if self._clahe is not None:
+            l = self._clahe.apply(l)
+        limg = cv2.merge((l, a, b))
+        return cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
 
     def process_frame(self, frame):
+        """
+        Returns: (annotated_frame, events)
+        Note: annotated_frame is on 480p-resized image.
+        """
         self.frame_count += 1
-        
-        # Update buffer (always add every frame for smooth video recording)
-        self.frame_buffer.append(frame.copy())
-        
-        # Update active recordings
-        completed_recordings = []
-        for rec in self.active_recordings:
-            rec['frames'].append(frame.copy())
-            if len(rec['frames']) >= rec['target_length']:
-                completed_recordings.append(rec)
-        
-        # Process completed recordings
-        for rec in completed_recordings:
-            self.active_recordings.remove(rec)
-            self._save_and_send_video(rec)
-
-        # Optimization: Skip frames for inference
-        # We still draw the LAST known boxes on skipped frames to maintain visual continuity
-        if self.frame_count % (self.SKIP_FRAMES + 1) != 0 and self.last_results is not None:
-            return self._draw_results(frame, self.last_results)
-
-        # Preprocess for night vision if enabled
-        processed_frame = self._preprocess_frame(frame)
-
-        # Run inference with tracking
-        # imgsz=640 ensures input is resized to 640 before inference, saving memory/compute on large images
-        results = self.model.track(processed_frame, persist=True, verbose=False, classes=[0], imgsz=640) 
-        
-        self.last_results = results # Cache results
-        return self._draw_results(frame, results)
-
-    def _draw_results(self, frame, results):
-        annotated_frame = frame.copy()
-        events = []
         current_time = time.time()
 
-        if results and results[0].boxes and results[0].keypoints:
-            boxes = results[0].boxes.xywh.cpu().numpy()
-            track_ids = results[0].boxes.id
-            if track_ids is not None:
-                track_ids = track_ids.int().cpu().numpy()
-            else:
-                track_ids = []
-            
-            keypoints = results[0].keypoints.xy.cpu().numpy() # (N, 17, 2)
+        frame_480 = self._resize_to_480h(frame)
 
-            for i, track_id in enumerate(track_ids):
-                bbox = boxes[i] # x_center, y_center, w, h
-                kpts = keypoints[i]
+        # Skip inference frames: only draw cached last_results
+        if (self.frame_count % (self.SKIP_FRAMES + 1) != 0) and (self.last_results is not None):
+            return self._draw_results(
+                frame_480,
+                self.last_results,
+                current_time=current_time,
+                draw_skeleton=False,
+                emit_events=False
+            )
 
-                # Update history
+        processed = self._preprocess_frame(frame_480)
+
+        results = self.model.track(
+            processed,
+            persist=True,
+            verbose=False,
+            classes=[0],
+            imgsz=640
+        )
+
+        self.last_results = results
+        return self._draw_results(
+            frame_480,
+            results,
+            current_time=current_time,
+            draw_skeleton=True,
+            emit_events=True
+        )
+
+    def _draw_results(self, frame, results, current_time=None, draw_skeleton=True, emit_events=True):
+        annotated = frame.copy()
+        events = []
+
+        if current_time is None:
+            current_time = time.time()
+
+        if not results or results[0].boxes is None or results[0].boxes.xywh is None:
+            return annotated, events
+
+        r0 = results[0]
+        boxes = r0.boxes.xywh.cpu().numpy()
+        track_ids = r0.boxes.id
+        if track_ids is None:
+            return annotated, events
+        track_ids = track_ids.int().cpu().numpy()
+
+        kpts_xy = None
+        kpts_conf = None
+        if getattr(r0, "keypoints", None) is not None and r0.keypoints is not None:
+            if r0.keypoints.xy is not None:
+                kpts_xy = r0.keypoints.xy.cpu().numpy()
+            if hasattr(r0.keypoints, "conf") and r0.keypoints.conf is not None:
+                kpts_conf = r0.keypoints.conf.cpu().numpy()
+
+        for i, track_id in enumerate(track_ids):
+            bbox = boxes[i]
+            x, y, w, h = bbox
+            x1, y1 = int(x - w / 2), int(y - h / 2)
+            x2, y2 = int(x + w / 2), int(y + h / 2)
+
+            color = (0, 255, 0)
+            is_fall = False
+            score = 0.0
+            reason = ""
+
+            if emit_events and (kpts_xy is not None) and i < len(kpts_xy):
+                kpts = kpts_xy[i]
+
+                # Update minimal history for velocity
                 if track_id not in self.track_history:
-                    self.track_history[track_id] = deque(maxlen=60) # Store ~2 sec at 30fps
-                self.track_history[track_id].append((current_time, kpts, bbox))
+                    self.track_history[track_id] = deque(maxlen=60)
+                self.track_history[track_id].append((current_time, float(y), float(h)))
 
-                # Fall Detection Logic
-                is_fall, score, reason = self._detect_fall(track_id, kpts, bbox)
+                is_fall, score, reason = self._detect_fall(track_id, kpts, bbox, current_time)
 
-                # Draw info
-                color = (0, 255, 0)
                 if is_fall:
                     color = (0, 0, 255)
-                    # Check cooldown
-                    last_fall = self.fall_cooldown.get(track_id, 0)
+                    last_fall = self.fall_cooldown.get(int(track_id), 0.0)
                     if current_time - last_fall > self.COOLDOWN_SECONDS:
-                        self.fall_cooldown[track_id] = current_time
-                        
+                        self.fall_cooldown[int(track_id)] = current_time
+
                         event_data = {
                             "track_id": int(track_id),
                             "fall_score": float(score),
@@ -141,187 +198,221 @@ class FallDetector:
                             "reason": reason
                         }
                         events.append(event_data)
-                        
-                        # Start Recording
-                        # Capture buffer (past) + need future frames
-                        # Total length = buffer_size (past) + buffer_size (future)
-                        recording = {
-                            'frames': list(self.frame_buffer), # Copy current buffer
-                            'target_length': len(self.frame_buffer) + self.buffer_size,
-                            'track_id': int(track_id),
-                            'start_ts': current_time,
-                            'score': score
-                        }
-                        self.active_recordings.append(recording)
-                        
-                        cv2.putText(annotated_frame, f"FALL DETECTED! ({reason})", (int(bbox[0]-bbox[2]/2), int(bbox[1]-bbox[3]/2)-10), 
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 
-                # Draw bbox
-                x, y, w, h = bbox
-                cv2.rectangle(annotated_frame, (int(x-w/2), int(y-h/2)), (int(x+w/2), int(y+h/2)), color, 2)
-                cv2.putText(annotated_frame, f"ID: {track_id}", (int(x-w/2), int(y-h/2)-30), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
-                
-                # Draw skeleton (simplified)
-                self._draw_skeleton(annotated_frame, kpts, color)
+                        cv2.putText(
+                            annotated,
+                            f"FALL CONFIRMED! ({reason})",
+                            (x1, max(0, y1 - 10)),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.8,
+                            (0, 0, 255),
+                            2
+                        )
 
-        return annotated_frame, events
+                        # Optional: send snapshot
+                        try:
+                            if hasattr(self.telegram_bot, "send_photo"):
+                                ok, buf = cv2.imencode(".jpg", annotated, [int(cv2.IMWRITE_JPEG_QUALITY), 85])
+                                if ok:
+                                    self.telegram_bot.send_photo(
+                                        caption=f"📸 Fall Snapshot (CONFIRMED)\nTrack ID: {int(track_id)}\nScore: {score:.2f}\nReason: {reason}",
+                                        photo_bytes=buf.tobytes()
+                                    )
+                        except Exception as e:
+                            logger.debug(f"Snapshot send skipped/failed: {e}")
 
-    def _save_and_send_video(self, recording):
-        try:
-            frames = recording['frames']
-            if not frames: return
-            
-            height, width, _ = frames[0].shape
-            timestamp = int(recording['start_ts'])
-            filename = f"fall_clip_{timestamp}_{recording['track_id']}.mp4"
-            filepath = os.path.join("data/snapshots", filename)
-            
-            # Write video
-            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-            out = cv2.VideoWriter(filepath, fourcc, self.fps, (width, height))
-            for f in frames:
-                out.write(f)
-            out.release()
-            
-            logger.info(f"Saved video clip: {filepath}")
-            
-            # Send via Telegram
-            self.telegram_bot.send_video(
-                caption=f"🎥 Fall Video Clip\nTrack ID: {recording['track_id']}\nScore: {recording['score']:.2f}",
-                video_path=filepath
+                # If pending, show hint (optional, very light)
+                elif reason == "Pending":
+                    cv2.putText(
+                        annotated,
+                        "FALL? (pending confirm)",
+                        (x1, max(0, y1 - 10)),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.6,
+                        (0, 165, 255),
+                        2
+                    )
+
+            # Draw bbox + ID
+            cv2.rectangle(annotated, (x1, y1), (x2, y2), color, 2)
+            cv2.putText(
+                annotated,
+                f"ID: {int(track_id)}",
+                (x1, max(0, y1 - 30)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.6,
+                color,
+                2
             )
-        except Exception as e:
-            logger.error(f"Failed to save/send video: {e}")
 
+            # Draw skeleton only when useful
+            if draw_skeleton and (kpts_xy is not None) and i < len(kpts_xy):
+                if is_fall or score >= 0.6:
+                    conf_row = (kpts_conf[i] if kpts_conf is not None and i < len(kpts_conf) else None)
+                    self._draw_skeleton_fast(annotated, kpts_xy[i], color, conf_row)
 
-    def _detect_fall(self, track_id, keypoints, bbox):
-        # 1. Aspect Ratio Check
-        # bbox: x, y, w, h
-        w, h = bbox[2], bbox[3]
+        return annotated, events
+
+    def _posture(self, angle_deg: float, aspect_ratio: float):
+        """
+        Classify posture roughly using hysteresis-like thresholds.
+        - upright: clearly standing/sitting upright
+        - lying: clearly horizontal / fallen
+        """
+        upright = (angle_deg < 35.0) and (aspect_ratio < 1.15)
+        lying = (angle_deg > 60.0) or (aspect_ratio > 1.65)
+        return upright, lying
+
+    def _detect_fall(self, track_id, keypoints, bbox, current_time: float):
+        """
+        Returns (is_fall_confirmed, score, reason)
+        Uses pending confirmation window to avoid sit->stand false positives.
+        """
+        w, h = float(bbox[2]), float(bbox[3])
+        if h <= 1e-6:
+            return False, 0.0, ""
+
         aspect_ratio = w / h
-        
-        # 2. Torso Angle Check
-        # Keypoints: 5=L_Shoulder, 6=R_Shoulder, 11=L_Hip, 12=R_Hip
-        # Average shoulder and hip points
-        if len(keypoints) < 13: return False, 0.0, ""
-        
+
+        if keypoints is None or len(keypoints) < 13:
+            return False, 0.0, ""
+
         l_shoulder, r_shoulder = keypoints[5], keypoints[6]
         l_hip, r_hip = keypoints[11], keypoints[12]
-        
-        # Check if keypoints are detected (not [0,0])
-        if np.sum(l_shoulder) == 0 or np.sum(l_hip) == 0:
+
+        # Must have meaningful points
+        if (l_shoulder[0] <= 0 and l_shoulder[1] <= 0) or (l_hip[0] <= 0 and l_hip[1] <= 0):
             return False, 0.0, ""
 
-        mid_shoulder = (l_shoulder + r_shoulder) / 2
-        mid_hip = (l_hip + r_hip) / 2
-        
-        dx = mid_shoulder[0] - mid_hip[0]
-        dy = mid_shoulder[1] - mid_hip[1] # y increases downwards
-        
-        # Angle with vertical axis (y-axis)
-        angle_rad = np.arctan2(abs(dx), abs(dy))
-        angle_deg = np.degrees(angle_rad)
-        
-        score = 0.0
-        reason = []
+        mid_shoulder = (l_shoulder + r_shoulder) * 0.5
+        mid_hip = (l_hip + r_hip) * 0.5
 
-        # Static Pose Checks
+        dx = float(mid_shoulder[0] - mid_hip[0])
+        dy = float(mid_shoulder[1] - mid_hip[1])
+
+        angle_rad = np.arctan2(abs(dx), max(abs(dy), 1e-6))
+        angle_deg = float(np.degrees(angle_rad))
+
+        score = 0.0
+        reason_parts = []
         pose_indicates_fall = False
+
         if angle_deg > self.ANGLE_THRESHOLD:
             score += 0.6
-            reason.append("Angle")
+            reason_parts.append("Angle")
             pose_indicates_fall = True
-        
+
         if aspect_ratio > self.ASPECT_RATIO_THRESHOLD:
             score += 0.4
-            reason.append("Ratio")
+            reason_parts.append("Ratio")
             pose_indicates_fall = True
-            
+
         if not pose_indicates_fall:
-            return False, 0.0, ""
+            # If not even candidate, we can still clear pending if recovered long enough (handled below)
+            pass
 
-        # 3. Dynamic Velocity Check (To distinguish from lying down slowly)
-        # We check if there was a high downward velocity in the recent history
-        has_velocity = self._check_fall_velocity(track_id, bbox[3])
-        
-        if has_velocity:
-            score += 0.3
-            reason.append("Velocity")
-        else:
-            # If no velocity, check for "Slow Collapse"
-            # Conditions: Extreme Angle + Head Low (near ground/feet)
-            
-            # Check Head Height vs Ankle Height
-            # Keypoints: 0=Nose, 15=L_Ankle, 16=R_Ankle
-            head_y = keypoints[0][1] if keypoints[0][1] > 0 else 0
-            
-            l_ankle_y = keypoints[15][1]
-            r_ankle_y = keypoints[16][1]
-            
-            # Get max ankle y (lowest point)
-            ankle_y = max(l_ankle_y, r_ankle_y)
-            if ankle_y == 0: ankle_y = bbox[1] + bbox[3]/2 # Fallback to bbox bottom
-            
-            # If head is close to ground (within 20% of height from ankle)
-            # AND Angle is very large (> 60)
-            head_dist_from_ground = abs(ankle_y - head_y)
-            is_head_low = head_dist_from_ground < (bbox[3] * 0.3) # Head within 30% of height from feet level
-            
-            if angle_deg > 60 and is_head_low:
-                score += 0.2
-                reason.append("Collapsed")
-            elif score < 0.8: 
-                # If score is not overwhelming and no collapse signs, reject
-                return False, score, "Static Only (Lying Down?)"
-            
-        is_fall = score >= self.FALL_CONFIDENCE_THRESHOLD
-        return is_fall, score, ", ".join(reason)
+        has_velocity = self._check_fall_velocity(track_id)
+        if pose_indicates_fall and has_velocity:
+            score += 0.4
+            reason_parts.append("Velocity")
+        elif pose_indicates_fall:
+            head_y = float(keypoints[0][1]) if keypoints[0][1] > 0 else 0.0
+            ground_y = float(bbox[1] + bbox[3] / 2.0)
+            head_relative_height = (ground_y - head_y) / h if h > 0 else 1.0
 
-    def _check_fall_velocity(self, track_id, current_height):
+            if head_relative_height < 0.4:
+                score += 0.3
+                reason_parts.append("HeadLow")
+
+        # Posture classification for confirmation logic
+        upright, lying = self._posture(angle_deg, aspect_ratio)
+
+        tid = int(track_id)
+        pend = self.pending_falls.get(tid)
+
+        # Define what is a "candidate" to start pending
+        fall_candidate = pose_indicates_fall and (score >= self.FALL_CONFIDENCE_THRESHOLD)
+
+        # Start/update pending if candidate happens
+        if fall_candidate:
+            if pend is None:
+                self.pending_falls[tid] = {
+                    "t0": current_time,
+                    "best_score": float(score),
+                    "reason": ", ".join(reason_parts),
+                    "recovered_since": None
+                }
+                pend = self.pending_falls[tid]
+            else:
+                if score > pend.get("best_score", 0.0):
+                    pend["best_score"] = float(score)
+                    pend["reason"] = ", ".join(reason_parts)
+
+        # If we have pending, decide confirm/cancel
+        if pend is not None:
+            # If upright => count recovered time and potentially cancel
+            if upright:
+                if pend.get("recovered_since") is None:
+                    pend["recovered_since"] = current_time
+                if (current_time - pend["recovered_since"]) >= self.RECOVER_CLEAR_SECONDS:
+                    # Cancel: person stood back up (sit->stand, stumble recovery, etc.)
+                    best = float(pend.get("best_score", score))
+                    del self.pending_falls[tid]
+                    return False, best, "Recovered"
+            else:
+                # Not upright => reset recovered timer
+                pend["recovered_since"] = None
+
+            # Confirm only if lying and has persisted long enough
+            if lying and (current_time - pend["t0"]) >= self.CONFIRM_SECONDS:
+                best_score = float(pend.get("best_score", score))
+                best_reason = pend.get("reason", ", ".join(reason_parts))
+                del self.pending_falls[tid]
+                return True, best_score, f"{best_reason}"
+
+            # Still pending
+            return False, float(pend.get("best_score", score)), "Pending"
+
+        # No pending and not confirmed
+        return False, score, ""
+
+    def _check_fall_velocity(self, track_id):
         history = self.track_history.get(track_id)
-        if not history or len(history) < 5:
+        if not history or len(history) < 6:
             return False
-            
-        # Check last ~1 second (30 frames)
-        # We look for a peak downward velocity
+
+        hist = list(history)
         max_v_norm = 0.0
-        
-        # Iterate backwards to find recent fall
-        # We compare frame i with frame i-5 to get smoother velocity
-        history_list = list(history)
-        for i in range(len(history_list) - 1, 5, -1):
-            curr = history_list[i]
-            prev = history_list[i-5]
-            
-            dt = curr[0] - prev[0]
-            if dt <= 0: continue
-            
-            dy = curr[2][1] - prev[2][1] # Change in y_center (positive = down)
-            
-            # Normalize by height to be scale invariant
-            # v_norm = (pixels/sec) / height = heights/sec
-            v_norm = (dy / dt) / current_height
-            
+
+        for i in range(len(hist) - 1, 5, -1):
+            t_curr, y_curr, h_curr = hist[i]
+            t_prev, y_prev, _ = hist[i - 5]
+
+            dt = t_curr - t_prev
+            if dt <= 1e-6 or h_curr <= 1e-6:
+                continue
+
+            dy = (y_curr - y_prev)  # positive = down
+            v_norm = (dy / dt) / h_curr  # heights/sec
             if v_norm > max_v_norm:
                 max_v_norm = v_norm
-                
-        # Threshold: > 0.5 heights per second is a reasonable "drop"
-        # Walking is usually horizontal. Sitting down is slow. Falling is fast.
+
         return max_v_norm > 0.5
 
-    def _draw_skeleton(self, frame, kpts, color):
-        # Simple skeleton drawing
-        # COCO Keypoints connections
-        skeleton = [
-            (5, 7), (7, 9), (6, 8), (8, 10), # Arms
-            (11, 13), (13, 15), (12, 14), (14, 16), # Legs
-            (5, 6), (11, 12), (5, 11), (6, 12) # Torso
-        ]
-        for p1, p2 in skeleton:
-            if p1 < len(kpts) and p2 < len(kpts):
-                pt1 = (int(kpts[p1][0]), int(kpts[p1][1]))
-                pt2 = (int(kpts[p2][0]), int(kpts[p2][1]))
-                if pt1 != (0,0) and pt2 != (0,0):
-                    cv2.line(frame, pt1, pt2, color, 2)
+    def _draw_skeleton_fast(self, frame, kpts_xy, color, kpts_conf=None):
+        pts = kpts_xy.astype(np.int32, copy=False)
+
+        if kpts_conf is not None:
+            valid = kpts_conf > self.KPT_CONF_THR
+        else:
+            valid = (pts[:, 0] != 0) & (pts[:, 1] != 0)
+
+        for p1, p2 in self._SKELETON:
+            if valid[p1] and valid[p2]:
+                cv2.line(
+                    frame,
+                    (int(pts[p1, 0]), int(pts[p1, 1])),
+                    (int(pts[p2, 0]), int(pts[p2, 1])),
+                    color,
+                    2
+                )

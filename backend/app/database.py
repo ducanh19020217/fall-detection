@@ -66,6 +66,13 @@ class FallEventModel(Base):
     is_fall = Column(Boolean, default=True)
     timestamp = Column(DateTime, default=datetime.utcnow)
     snapshot_path = Column(String, nullable=True)
+    
+    # New columns for resolution tracking
+    is_resolved = Column(Boolean, default=False)
+    responder_name = Column(String, nullable=True)
+    responder_id = Column(String, nullable=True)
+    resolved_at = Column(DateTime, nullable=True)
+    telegram_message_id = Column(String, nullable=True)
 
     source = relationship("VideoSourceModel")
 

@@ -9,17 +9,32 @@ A complete computer vision system for detecting falls in real-time using YOLOv8,
 - **Interactive UI**: React-based dashboard with live video and event logging.
 - **Event Logging**: Saves fall events with snapshots to SQLite.
 
-## 🚀 Quick Start (Docker - Recommended)
+## 🚀 Deployment for Users (No Source Code Needed)
 
-The easiest way to run the system on any OS (Windows, Linux, macOS) is using Docker.
+If you just want to run the system without touching the code, you only need two files: `docker-compose.prod.yml` and `.env`.
+
+1.  **Download the deployment files**:
+    *   `docker-compose.prod.yml`
+    *   `.env.example` (rename to `.env`)
+2.  **Configure `.env`**:
+    *   Set `DOCKER_USER` to the username where the images are hosted.
+    *   (Optional) Set your Telegram Bot credentials.
+3.  **Run the system**:
+    ```bash
+    docker compose -f docker-compose.prod.yml up -d
+    ```
+4.  **Access**: [http://localhost](http://localhost) (Login: `admin` / `admin`)
+
+---
+
+## 🛠️ Setup for Developers (Clone & Build)
+
+If you want to modify the code and build your own images:
 
 1.  **Clone the repository**
 2.  **Run the setup script**:
     *   **Linux/macOS**: `chmod +x setup.sh && ./setup.sh`
     *   **Windows**: Double-click `setup.bat`
-3.  **Access the system**:
-    *   **UI**: [http://localhost](http://localhost)
-    *   **Default Login**: `admin` / `admin`
 
 > [!TIP]
 > You can configure Telegram notifications and other settings in the `.env` file created after running the setup script.

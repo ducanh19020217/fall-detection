@@ -59,10 +59,15 @@ class FallEventBase(BaseModel):
     fall_score: float
     timestamp: datetime
     snapshot_path: Optional[str] = None
+    is_resolved: bool = False
+    responder_name: Optional[str] = None
+    responder_id: Optional[str] = None
+    resolved_at: Optional[datetime] = None
 
 class FallEvent(FallEventBase):
     id: int
     source_id: int
+    source: Optional[VideoSource] = None
 
     class Config:
         from_attributes = True

@@ -58,42 +58,43 @@ const AppContent = () => {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        const fetchInitialData = async () => {
-            console.log("Fetching initial data to restore streams...");
+        const fetchEvents = async () => {
+            const currentToken = localStorage.getItem('token');
+            if (!currentToken) return;
             try {
-                // 1. Fetch active pipeline IDs
-                const statusRes = await axios.get(`${API_URL}/api/pipeline/status`);
+                const res = await axios.get(`${API_URL}/api/events?limit=20`);
+                setEvents(res.data);
+            } catch (e) { }
+        };
+
+        const fetchInitialData = async () => {
+            const currentToken = localStorage.getItem('token');
+            if (!currentToken) return;
+
+            try {
+                // Fetch status and sources in parallel
+                const [statusRes, sourcesRes, _] = await Promise.all([
+                    axios.get(`${API_URL}/api/pipeline/status`),
+                    axios.get(`${API_URL}/api/sources`),
+                    fetchEvents() // Also fetch events immediately
+                ]);
+
                 const activeIds = statusRes.data.active_source_ids;
-                console.log("Active pipeline IDs:", activeIds);
+                const allSources = sourcesRes.data;
 
                 if (activeIds && activeIds.length > 0) {
-                    // 2. Fetch all sources to get details for active ones
-                    const sourcesRes = await axios.get(`${API_URL}/api/sources`);
-                    const allSources = sourcesRes.data;
-
                     const restoredStreams = allSources.filter(s => activeIds.includes(s.id));
-                    console.log("Restored streams:", restoredStreams);
                     setActiveStreams(restoredStreams);
                 }
             } catch (e) {
-                console.error("Failed to restore active streams", e);
+                console.error("Failed to restore initial data", e);
             }
         };
 
         fetchInitialData();
 
-        // Poll for events
-        const interval = setInterval(async () => {
-            const currentToken = localStorage.getItem('token');
-            if (!currentToken) return;
-
-            try {
-                const res = await axios.get(`${API_URL}/api/events?limit=20`);
-                setEvents(res.data);
-            } catch (e) {
-                // Silent fail for polling
-            }
-        }, 10000); // Poll events every 10s instead of 30s for better UX
+        // Poll for events every 5s for better responsiveness
+        const interval = setInterval(fetchEvents, 5000);
 
         return () => clearInterval(interval);
     }, []);
